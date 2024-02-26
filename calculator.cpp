@@ -1,66 +1,97 @@
 #include <windows.h>
+#include <stdio.h>
 
-/* This is where all the input to the window goes to */
-LRESULT CALLBACK WndProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-	switch(Message) {
-		
-		/* Upon destruction, tell the main thread to stop */
-		case WM_DESTROY: {
-			PostQuitMessage(0);
-			break;
-		}
-		
-		/* All other messages (a lot of them) are processed using default procedures */
-		default:
-			return DefWindowProc(hwnd, Message, wParam, lParam);
-	}
-	return 0;
+LRESULT CALLBACK WindowProcedure(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    static HWND textfield, textbox1, textbox2;
+    static HWND add, sub, mul, div;
+    char outMessage[100];
+    char num1[256], num2[256];
+    double val1, val2, result;
+
+    switch (message) {
+        case WM_CREATE:
+            textfield = CreateWindow("STATIC", "Please input two numbers", WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 200, 20, hwnd, NULL, NULL, NULL);
+            textbox1 = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 62.5, 60, 120, 20, hwnd, NULL, NULL, NULL);
+            textbox2 = CreateWindow("EDIT", "", WS_VISIBLE | WS_CHILD | WS_BORDER, 62.5, 90, 120, 20, hwnd, NULL, NULL, NULL);
+            add = CreateWindow("BUTTON", "+", WS_VISIBLE | WS_CHILD | WS_BORDER, 65, 130, 20, 20, hwnd, (HMENU)1, NULL, NULL);
+            sub = CreateWindow("BUTTON", "-", WS_VISIBLE | WS_CHILD | WS_BORDER, 95, 130, 20, 20, hwnd, (HMENU)2, NULL, NULL);
+            mul = CreateWindow("BUTTON", "*", WS_VISIBLE | WS_CHILD | WS_BORDER, 125, 130, 20, 20, hwnd, (HMENU)3, NULL, NULL);
+            div = CreateWindow("BUTTON", "/", WS_VISIBLE | WS_CHILD | WS_BORDER, 155, 130, 20, 20, hwnd, (HMENU)4, NULL, NULL);
+            break;
+        case WM_COMMAND:
+            GetWindowText(textbox1, num1, 256);
+            GetWindowText(textbox2, num2, 256);
+            val1 = atof(num1);
+            val2 = atof(num2);
+            switch (LOWORD(wParam)) {
+                case 1:
+    				result = val1 + val2;
+   				break;
+				case 2:
+    				result = val1 - val2;
+    			break;
+				case 3:
+    				result = val1 * val2;
+    			break;
+				case 4:
+    			result = val1 / val2;
+   				 break;
+			}
+			sprintf(outMessage, "Hello");
+			MessageBox(hwnd, outMessage, "Result", MB_OK);
+
+            }
+            break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+        default:
+            return DefWindowProc(hwnd, message, wParam, lParam);
+    }
+    return 0;
 }
 
-/* The 'main' function of Win32 GUI programs: this is where execution starts */
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	WNDCLASSEX wc; /* A properties struct of our window */
-	HWND hwnd; /* A 'HANDLE', hence the H, or a pointer to our window */
-	MSG msg; /* A temporary location for all messages */
+int WINAPI WinMain(HINSTANCE hThisInstance, HINSTANCE hPrevInstance, LPSTR lpszArgument, int nCmdShow) {
+    WNDCLASSEX wincl = {};
+    HWND hwnd;
+    MSG messages;
 
-	/* zero out the struct and set the stuff we want to modify */
-	memset(&wc,0,sizeof(wc));
-	wc.cbSize	 = sizeof(WNDCLASSEX);
-	wc.lpfnWndProc	 = WndProc; /* This is where we will send messages to */
-	wc.hInstance	 = hInstance;
-	wc.hCursor	 = LoadCursor(NULL, IDC_ARROW);
-	
-	/* White, COLOR_WINDOW is just a #define for a system color, try Ctrl+Clicking it */
-	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
-	wc.lpszClassName = "WindowClass";
-	wc.hIcon	 = LoadIcon(NULL, IDI_APPLICATION); /* Load a standard icon */
-	wc.hIconSm	 = LoadIcon(NULL, IDI_APPLICATION); /* use the name "A" to use the project icon */
+    wincl.hInstance = hThisInstance;
+    wincl.lpszClassName = "Test";
+    wincl.lpfnWndProc = WindowProcedure;
+    wincl.style = CS_DBLCLKS;
+    wincl.cbSize = sizeof(WNDCLASSEX);
+    wincl.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wincl.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+    wincl.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wincl.lpszMenuName = NULL;
+    wincl.cbClsExtra = 0;
+    wincl.cbWndExtra = 0;
+    wincl.hbrBackground = (HBRUSH)CreateSolidBrush(RGB(255, 0, 0));
 
-	if(!RegisterClassEx(&wc)) {
-		MessageBox(NULL, "Window Registration Failed!","Error!",MB_ICONEXCLAMATION|MB_OK);
-		return 0;
-	}
+    if (!RegisterClassEx(&wincl))
+        return 0;
 
-	hwnd = CreateWindowEx(WS_EX_CLIENTEDGE,"WindowClass","Caption",WS_VISIBLE|WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, /* x */
-		CW_USEDEFAULT, /* y */
-		640, /* width */
-		480, /* height */
-		NULL,NULL,hInstance,NULL);
+    hwnd = CreateWindowEx(
+        0,
+        "Test",
+        "MyCalculator",
+        WS_SYSMENU,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
+        250,
+        200,
+        HWND_DESKTOP,
+        NULL,
+        hThisInstance,
+        NULL);
 
-	if(hwnd == NULL) {
-		MessageBox(NULL, "Window Creation Failed!","Error!",MB_ICONEXCLAMATION|MB_OK);
-		return 0;
-	}
+    ShowWindow(hwnd, nCmdShow);
 
-	/*
-		This is the heart of our program where all input is processed and 
-		sent to WndProc. Note that GetMessage blocks code flow until it receives something, so
-		this loop will not produce unreasonably high CPU usage
-	*/
-	while(GetMessage(&msg, NULL, 0, 0) > 0) { /* If no error is received... */
-		TranslateMessage(&msg); /* Translate key codes to chars if present */
-		DispatchMessage(&msg); /* Send it to WndProc */
-	}
-	return msg.wParam;
+    while (GetMessage(&messages, NULL, 0, 0)) {
+        TranslateMessage(&messages);
+        DispatchMessage(&messages);
+    }
+
+    return messages.wParam;
 }
